@@ -471,6 +471,8 @@
   id="birthdate"
   placeholder="dd/mm/aaaa"
   autocomplete="off"
+  inputmode="numeric"
+  maxlength="10"
 />
 
       <label>¿Cómo describirías tu momento actual?</label>
@@ -925,14 +927,65 @@ la que aparezca en la web en el momento de tu compra.
 
 <!-- Calendario Flatpickr -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
 <script>
+  // 1) Flatpickr solo para validar, sin abrir calendario
   flatpickr("#birthdate", {
-    allowInput: true,           // PERMITIR escribir a mano
-    clickOpens: true,           // Solo abre el calendario si tocas
-    disableMobile: true,        // Evita el calendario feo del celular
-    dateFormat: "d/m/Y",        // Formato correcto
-    maxDate: "today"            // No permitir fechas futuras
+    dateFormat: "d/m/Y",
+    maxDate: "today",
+    allowInput: true,   // deja escribir a mano
+    clickOpens: false,  // NO abre el calendario
+    disableMobile: true // usa siempre este comportamiento
+  });
+
+  // 2) Máscara de escritura dd/mm/aaaa
+  const birthInput = document.getElementById("birthdate");
+
+  birthInput.addEventListener("input", (e) => {
+    // Solo números y máximo 8 dígitos
+    let v = e.target.value.replace(/\D/g, "").slice(0, 8);
+
+    if (v.length >= 5) {
+      // dd/mm/aaaa
+      e.target.value = v.slice(0, 2) + "/" + v.slice(2, 4) + "/" + v.slice(4);
+    } else if (v.length >= 3) {
+      // dd/mm
+      e.target.value = v.slice(0, 2) + "/" + v.slice(2);
+    } else {
+      // d ó dd
+      e.target.value = v;
+    }
+  });
+
+  // 3) Validación básica al salir del campo
+  birthInput.addEventListener("blur", () => {
+    const value = birthInput.value.trim();
+    if (!value) return;
+
+    const m = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m) {
+      alert("Usa el formato dd/mm/aaaa, por favor.");
+      birthInput.focus();
+      return;
+    }
+
+    const dia = parseInt(m[1], 10);
+    const mes = parseInt(m[2], 10);
+    const ano = parseInt(m[3], 10);
+
+    // Rangos básicos
+    if (mes < 1 || mes > 12 || dia < 1 || dia > 31 || ano < 1900) {
+      alert("Revisa que la fecha exista (dd/mm/aaaa).");
+      birthInput.focus();
+      return;
+    }
+
+    // Opcional: que no sea fecha futura
+    const hoy = new Date();
+    const fecha = new Date(ano, mes - 1, dia);
+    if (fecha > hoy) {
+      alert("La fecha de nacimiento no puede ser futura.");
+      birthInput.focus();
+    }
   });
 </script>
 
