@@ -368,6 +368,15 @@
         opacity: 0.9;
       }
     </style>
+     <!-- Flatpickr: estilos del calendario -->
+  <link 
+    rel="stylesheet" 
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+  />
+  <link 
+    rel="stylesheet" 
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css"
+  />
   </head>
 
   <body>
@@ -457,7 +466,12 @@
       />
 
       <label>Fecha de nacimiento</label>
-      <input type="date" id="birthdate" />
+<input
+  type="text"
+  id="birthdate"
+  placeholder="dd/mm/aaaa"
+  autocomplete="off"
+/>
 
       <label>¿Cómo describirías tu momento actual?</label>
       <textarea id="estadoActual" rows="3" placeholder=""></textarea>
@@ -908,5 +922,17 @@ la que aparezca en la web en el momento de tu compra.
   Todos los derechos reservados · Contacto:
   <strong style="color:#ffccff;">portal.akashico@gmail.com</strong>
 </div>
+
+<!-- Calendario Flatpickr -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  flatpickr("#birthdate", {
+    dateFormat: "d/m/Y",
+    maxDate: "today",
+    disableMobile: false,
+    theme: "dark"
+  });
+</script>
+
   </body>
 </html>

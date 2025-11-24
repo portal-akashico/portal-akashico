@@ -1,7 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-require("dotenv").config();
+
+// Cargar .env desde la raíz del proyecto (../.env)
+require("dotenv").config({
+  path: path.join(__dirname, "..", ".env"),
+});
 
 console.log("OPENAI_API_KEY:", !!process.env.OPENAI_API_KEY);
 console.log("STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY);
@@ -16,28 +20,9 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// --- Nodemailer ---
-const nodemailer = require("nodemailer");
-
-// Transporter con Gmail + contraseña de aplicación
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST, // smtp.gmail.com
-  port: Number(process.env.SMTP_PORT), // 465
-  secure: Number(process.env.SMTP_PORT) === 465,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-// Verificación opcional
-transporter.verify((err) => {
-  if (err) {
-    console.error("❌ Error al conectar con SMTP:", err);
-  } else {
-    console.log("✅ SMTP LISTO para enviar correos");
-  }
-});
+// --- Resend ---
+const { Resend } = require("resend");
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -153,18 +138,14 @@ Escribe en segunda persona ("tú").
 
   const lectura = (completion.choices[0]?.message?.content || "").trim();
 
-  // ===== ENVIAR EMAIL =====
+  // ===== HTML PARA EL CORREO =====
   const lecturaHTML = lectura
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/\n/g, "<br/>");
 
-  const mailOptions = {
-    from: process.env.SMTP_FROM,
-    to: email,
-    subject: cfg.subject,
-    html: `
+  const html = `
 <div style="background:#050512;padding:24px;color:#f4ecff;font-family:Arial,sans-serif;">
   <div style="max-width:720px;margin:0 auto;background:#11111f;padding:24px;border-radius:16px;border:1px solid #6d34ff;">
     <h2 style="text-align:center;color:#e9d6ff;margin-top:0;">${cfg.titulo}</h2>
@@ -175,16 +156,22 @@ Escribe en segunda persona ("tú").
     Portal Akáshico ✨
   </p>
 </div>
-    `,
-  };
+`;
 
+  // ===== ENVIAR EMAIL CON RESEND =====
   let emailEnviado = false;
   try {
-    await transporter.sendMail(mailOptions);
+    const data = await resend.emails.send({
+      from: process.env.EMAIL_FROM, // "Portal Akáshico ✨ <portal@resend.dev>"
+      to: email,
+      subject: cfg.subject,
+      html,
+    });
+
+    console.log("📨 Lectura enviada a", email, "Respuesta Resend:", data);
     emailEnviado = true;
-    console.log(`📨 Lectura enviada a ${email}`);
   } catch (err) {
-    console.error("❌ Error al enviar correo:", err);
+    console.error("❌ Error al enviar correo con Resend:", err);
   }
 
   return {
