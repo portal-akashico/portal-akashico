@@ -925,12 +925,14 @@ la que aparezca en la web en el momento de tu compra.
 
 <!-- Calendario Flatpickr -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <script>
   flatpickr("#birthdate", {
-    dateFormat: "d/m/Y",
-    maxDate: "today",
-    disableMobile: false,
-    theme: "dark"
+    allowInput: true,           // PERMITIR escribir a mano
+    clickOpens: true,           // Solo abre el calendario si tocas
+    disableMobile: true,        // Evita el calendario feo del celular
+    dateFormat: "d/m/Y",        // Formato correcto
+    maxDate: "today"            // No permitir fechas futuras
   });
 </script>
 
