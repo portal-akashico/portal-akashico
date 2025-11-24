@@ -137,7 +137,8 @@ Cada lectura debe ser única y basada en el texto de la persona.
 
 // 2) Elegir el prompt correcto según cfg.enfoque
 const enfoque = cfg?.enfoque || "akashica";
-const systemContent = systemPrompts[enfoque];
+// si el enfoque no existe en systemPrompts, usa akashica por defecto
+const systemContent = systemPrompts[enfoque] || systemPrompts["akashica"];
 
 // 3) Llamada a OpenAI
 const completion = await openai.chat.completions.create({
