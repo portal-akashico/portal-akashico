@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tu Lectura ✨</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #050512;
+        color: #ffffff;
+        padding: 20px;
+      }
+
+      /* Caja principal con glow más épico */
+      .container {
+        max-width: 700px;
+        margin: 0 auto;
+        background: #11111f;
+        border-radius: 18px;
+        padding: 26px 26px 36px;
+        box-shadow:
+          0 0 40px rgba(125, 66, 255, 0.85),
+          0 0 80px rgba(125, 66, 255, 0.55);
+        position: relative;
+      }
+
+      .container::before {
+        content: "";
+        position: absolute;
+        inset: -3px;
+        border-radius: 20px;
+        background: radial-gradient(
+          circle at top,
+          rgba(197, 139, 255, 0.35),
+          transparent 65%
+        );
+        z-index: -1;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 26px;
+        margin-bottom: 10px;
+        background: linear-gradient(90deg, #ffce73, #d38bff);
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+
+      h2 {
+        text-align: center;
+        color: #e9d6ff;
+        margin-top: 0;
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+
+      #lectura-texto {
+        white-space: pre-line;
+        line-height: 1.65;
+        font-size: 15px;
+        color: #f4ecff;
+      }
+
+      /* BOTÓN DESCARGA */
+      .download-container {
+        margin-top: 25px;
+        text-align: right;
+      }
+
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        background: linear-gradient(90deg, #c88bff, #ffb86c);
+        color: #0b0318;
+        box-shadow: 0 0 18px rgba(200, 139, 255, 0.55);
+        transition: 0.15s ease;
+      }
+
+      .download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 26px rgba(200, 139, 255, 0.7);
+      }
+
+      .download-icon {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* VOLVER */
+      .section-box {
+        max-width: 700px;
+        margin: 22px auto 0;
+        background: #11111f;
+        border-radius: 16px;
+        padding: 20px 24px;
+        box-shadow: 0 0 22px rgba(109, 52, 255, 0.4);
+        text-align: center;
+      }
+
+      #btn-volver {
+        width: 100%;
+        padding: 12px;
+        font-size: 15px;
+        border-radius: 8px;
+        background: #1f1f35;
+        color: #f3cfff;
+        border: 1px solid #3f3f70;
+        cursor: pointer;
+      }
+
+      #btn-volver:hover {
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="container">
+      <h1 id="titulo-principal">✨ Tu Lectura ✨</h1>
+      <h2 id="subtitulo-lectura"></h2>
+
+      <div id="lectura-texto"></div>
+
+      <div class="download-container">
+        <button class="download-btn" id="btn-descargar-lectura">
+          <svg viewBox="0 0 24 24" class="download-icon">
+            <path
+              d="M12 3v11m0 0l-4-4m4 4l4-4M5 19h14v2H5z"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Descargar lectura en PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- VOLVER -->
+    <div class="section-box">
+      <button id="btn-volver" onclick="volverAlPortal()">
+        ⬅ Volver al Portal Akáshico
+      </button>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const dataRaw = localStorage.getItem("lecturaActual");
+        if (!dataRaw) {
+          // Si no hay lectura guardada, regresamos al inicio
+          window.location.href = "/";
+          return;
+        }
+
+        const data = JSON.parse(dataRaw);
+
+        // TÍTULOS SEGÚN TIPO DE LECTURA
+        const TITULOS = {
+          akashica: {
+            principal: "✨ Tu Lectura Akáshica ✨",
+            subtitulo: "Lectura Akáshica — Canalizada",
+          },
+          vidas: {
+            principal: "✨ Tu Lectura de Vidas Pasadas ✨",
+            subtitulo: "Memorias del Alma — Canalizadas",
+          },
+          futuro: {
+            principal: "✨ Tu Lectura de Camino Futuro ✨",
+            subtitulo: "Potenciales y Caminos — Canalizados",
+          },
+          alma: {
+            principal: "✨ Tu Lectura de Alma Gemela ✨",
+            subtitulo: "Vínculos del Alma — Canalizados",
+          },
+        };
+
+        const tipo = data.tipoLectura || "akashica";
+        const cfg = TITULOS[tipo] || TITULOS.akashica;
+
+        document.getElementById("titulo-principal").innerText =
+          cfg.principal;
+        document.getElementById("subtitulo-lectura").innerText =
+          cfg.subtitulo;
+
+        document.getElementById("lectura-texto").innerText =
+          data.lectura || "";
+
+        // Botón para descargar PDF
+        document
+          .getElementById("btn-descargar-lectura")
+          .addEventListener("click", descargarPDF);
+      });
+
+   function descargarPDF() {
+  const { jsPDF } = window.jspdf;
+
+  // Leemos lo que se guardó en index.html
+  const dataRaw = localStorage.getItem("lecturaActual") || "{}";
+  let data = {};
+  try {
+    data = JSON.parse(dataRaw);
+  } catch (e) {
+    console.error(e);
+  }
+
+  const tipoLectura = data.tipoLectura || "akashica";
+
+  // Texto de la lectura ya renderizado en la página
+  const texto =
+    document.getElementById("lectura-texto")?.innerText || "";
+
+  // Subtítulo que ya se ve perfecto en la web
+  const subtitulo =
+    document.getElementById("subtitulo-lectura")?.innerText ||
+    "Lectura canalizada";
+
+  // Título PARA EL PDF (sin emojis, para que no se rompa)
+  const TITULOS_PDF = {
+    akashica: "Tu Lectura Akashica",
+    vidas: "Tu Lectura de Vidas Pasadas",
+    futuro: "Tu Lectura de Camino Futuro",
+    alma: "Tu Lectura de Alma Gemela & Vinculos del Alma"
+  };
+  const tituloPDF = TITULOS_PDF[tipoLectura] || TITULOS_PDF.akashica;
+
+  const pdf = new jsPDF({
+    unit: "pt",
+    format: "letter",
+  });
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  // ===== FONDO OSCURO =====
+  pdf.setFillColor(5, 5, 18); // #050512
+  pdf.rect(0, 0, pageWidth, pageHeight, "F");
+
+  // Marco brillante
+  pdf.setDrawColor(109, 52, 255);
+  pdf.setLineWidth(1.2);
+  pdf.roundedRect(24, 24, pageWidth - 48, pageHeight - 48, 12, 12);
+
+  // ===== TÍTULO (SIN EMOJIS) =====
+  pdf.setFont("Times", "Bold");
+  pdf.setFontSize(20);
+  pdf.setTextColor(233, 197, 255);
+  pdf.text(tituloPDF, pageWidth / 2, 60, { align: "center" });
+
+  // ===== SUBTÍTULO =====
+  pdf.setFont("Times", "Normal");
+  pdf.setFontSize(14);
+  pdf.setTextColor(243, 207, 255);
+  pdf.text(subtitulo, pageWidth / 2, 84, { align: "center" });
+
+  // Separador
+  pdf.setDrawColor(120, 80, 255);
+  pdf.setLineWidth(0.6);
+  pdf.line(72, 100, pageWidth - 72, 100);
+
+  // ===== CUERPO DEL TEXTO =====
+  pdf.setFont("Times", "Normal");
+  pdf.setFontSize(12);
+  pdf.setTextColor(230, 225, 255);
+
+  const marginX = 60;
+  const usableWidth = pageWidth - marginX * 2;
+  const lineHeight = 18;
+  let y = 120;
+
+  const parrafos = texto.split(/\n{2,}/);
+
+  function nuevaPagina() {
+    pdf.addPage();
+    // Fondo y marco también en nuevas páginas
+    pdf.setFillColor(5, 5, 18);
+    pdf.rect(0, 0, pageWidth, pageHeight, "F");
+    pdf.setDrawColor(109, 52, 255);
+    pdf.setLineWidth(1.2);
+    pdf.roundedRect(24, 24, pageWidth - 48, pageHeight - 48, 12, 12);
+
+    pdf.setFont("Times", "Normal");
+    pdf.setFontSize(12);
+    pdf.setTextColor(230, 225, 255);
+    y = 60;
+  }
+
+  parrafos.forEach((p) => {
+    const lineas = pdf.splitTextToSize(p.trim(), usableWidth);
+
+    lineas.forEach((linea) => {
+      if (y > pageHeight - 72) nuevaPagina();
+      pdf.text(linea, marginX, y);
+      y += lineHeight;
+    });
+
+    // Espacio extra entre párrafos
+    y += lineHeight;
+  });
+
+  pdf.save(`Lectura_${tipoLectura}_${Date.now()}.pdf`);
+}
+
+      // 👇 Esta función hace que el botón "Volver al Portal Akáshico" funcione
+      function volverAlPortal() {
+        // Si tu portal vive en otra ruta, cámbialo por "/ruta/index.html"
+        window.location.href = "/";
+      }
+    </script>
+  </body>
+</html>

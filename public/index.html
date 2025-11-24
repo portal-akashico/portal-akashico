@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Portal Akáshico ✨</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #050512;
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+
+      h1 {
+        color: #c88bff;
+        margin-bottom: 5px;
+      }
+
+      .subtitulo {
+        font-size: 14px;
+        color: #dcd7ff;
+        margin-bottom: 20px;
+      }
+
+      /* Botón de info */
+      #info-btn {
+        display: inline-block;
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #6d34ff, #a56dff);
+        color: #ffffff;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 0 18px rgba(125, 66, 255, 0.55);
+        margin-bottom: 20px;
+        transition: 0.2s ease;
+      }
+
+      #info-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 24px rgba(125, 66, 255, 0.75);
+        opacity: 0.95;
+      }
+
+      /* Caja principal del formulario */
+      .form-container {
+        background: #151526;
+        padding: 20px;
+        border-radius: 15px;
+        max-width: 900px;
+        margin: 0 auto;
+        box-shadow: 0 0 20px #6d34ff60;
+        text-align: left;
+      }
+
+      /* Badge de tipo de lectura */
+      .tipo-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #a56dff, #6d34ff);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+
+      h3 {
+        margin-top: 0;
+      }
+
+      label {
+        font-size: 13px;
+        margin-top: 12px;
+        display: block;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 8px;
+        border: none;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+
+      textarea {
+        resize: vertical;
+      }
+
+      ::placeholder {
+        color: #9da1b3 !important;
+        opacity: 1;
+      }
+
+      .section-box {
+        max-width: 900px;
+        margin: 20px auto 0;
+        background: #11111f;
+        border-radius: 16px;
+        padding: 20px 24px;
+        box-shadow: 0 0 20px rgba(109, 52, 255, 0.4);
+      }
+
+      .pay-btn {
+        padding: 14px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 600;
+        color: #ffffff;
+        background: linear-gradient(90deg, #6d34ff, #a56dff);
+        box-shadow: 0 0 25px rgba(125, 66, 255, 0.55);
+        transition: 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .pay-btn-main {
+        width: 100%;
+      }
+
+      .pay-btn-option {
+        flex: 1;
+        min-width: 180px;
+        font-size: 14px;
+        padding-inline: 18px;
+      }
+
+      .tipo-selector-activo {
+        box-shadow: 0 0 32px rgba(255, 255, 255, 0.65);
+        transform: translateY(-1px);
+      }
+
+      .pay-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 32px rgba(125, 66, 255, 0.75);
+        opacity: 0.95;
+      }
+
+      .pay-btn[disabled] {
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      .pay-btn.is-loading {
+        position: relative;
+        cursor: wait;
+      }
+
+      .pay-btn.is-loading::after {
+        content: "";
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.7);
+        border-top-color: transparent;
+        display: inline-block;
+        margin-left: 10px;
+        animation: spin 0.7s linear infinite;
+      }
+
+      body.loading-cursor {
+        cursor: progress;
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Modal info lecturas */
+      #info-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+
+      #info-modal .content {
+        background: #1a1a2e;
+        padding: 20px;
+        border-radius: 12px;
+        max-width: 520px;
+        text-align: left;
+        box-shadow: 0 0 20px #6d34ff80;
+      }
+
+      #info-modal h2 {
+        margin-top: 0;
+        color: #e6c7ff;
+      }
+
+      #info-modal p {
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+
+      #cerrar-info {
+        margin-top: 10px;
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        background: #6d34ff;
+        color: white;
+        border: none;
+      }
+
+      #cerrar-info:hover {
+        background: #542ac9;
+      }
+
+      /* ===================================================== */
+      /*   BOTÓN / MENÚ LEGAL (AVISO + TÉRMINOS)               */
+      /* ===================================================== */
+
+      .legal-menu-btn {
+        position: fixed;
+        top: 14px;
+        right: 16px;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        border: 1px solid rgba(200, 139, 255, 0.6);
+        background: radial-gradient(
+          circle at top left,
+          rgba(200, 139, 255, 0.45),
+          #1a1028
+        );
+        box-shadow:
+          0 0 12px rgba(200, 139, 255, 0.7),
+          0 0 30px rgba(80, 50, 180, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 0;
+        z-index: 25;
+      }
+
+      .legal-menu-btn:hover {
+        transform: translateY(-1px);
+        box-shadow:
+          0 0 18px rgba(200, 139, 255, 0.9),
+          0 0 40px rgba(80, 50, 200, 0.9);
+      }
+
+      .legal-menu-icon {
+        width: 20px;
+        height: 20px;
+      }
+
+      .legal-menu {
+        position: fixed;
+        top: 60px;
+        right: 16px;
+        background: #151526;
+        border-radius: 12px;
+        box-shadow:
+          0 0 20px rgba(125, 66, 255, 0.6),
+          0 0 40px rgba(10, 0, 40, 0.9);
+        padding: 10px 0;
+        min-width: 220px;
+        display: none;
+        z-index: 24;
+        border: 1px solid rgba(140, 90, 255, 0.7);
+      }
+
+      .legal-menu h4 {
+        margin: 0 14px 8px;
+        font-size: 12px;
+        color: #bda9ff;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .legal-menu button {
+        width: 100%;
+        padding: 8px 16px;
+        border: none;
+        background: transparent;
+        color: #f4ecff;
+        text-align: left;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .legal-menu button:hover {
+        background: rgba(109, 52, 255, 0.25);
+      }
+
+      /* Modal de texto legal */
+
+      #legal-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 23;
+      }
+
+      #legal-modal .content {
+        background: #11111f;
+        max-width: 720px;
+        max-height: 80vh;
+        padding: 22px 24px;
+        border-radius: 16px;
+        box-shadow:
+          0 0 28px rgba(125, 66, 255, 0.9),
+          0 0 60px rgba(0, 0, 0, 0.9);
+        text-align: left;
+        border: 1px solid rgba(140, 90, 255, 0.7);
+        overflow: hidden;
+      }
+
+      #legal-modal h2 {
+        margin: 0 0 10px;
+        color: #e9d6ff;
+        font-size: 18px;
+      }
+
+      #legal-modal p {
+        font-size: 13px;
+        line-height: 1.6;
+        color: #f4ecff;
+      }
+
+      #legal-modal .scroll {
+        max-height: 58vh;
+        overflow-y: auto;
+        padding-right: 6px;
+        margin-top: 4px;
+      }
+
+      #cerrar-legal {
+        margin-top: 12px;
+        width: 100%;
+        padding: 10px;
+        border-radius: 10px;
+        border: none;
+        background: linear-gradient(90deg, #6d34ff, #a56dff);
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      #cerrar-legal:hover {
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- =========================================
+         BOTÓN / MENÚ LEGAL (ESQUINA SUPERIOR DER)
+         ========================================= -->
+    <button
+      class="legal-menu-btn"
+      id="legal-menu-btn"
+      onclick="toggleLegalMenu(event)"
+      aria-label="Avisos legales y términos de uso"
+    >
+      <!-- Icono de globo de texto -->
+      <svg
+        class="legal-menu-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-7l-4 3v-3H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"
+        />
+        <line x1="8" y1="9" x2="16" y2="9" />
+        <line x1="8" y1="12" x2="13" y2="12" />
+      </svg>
+    </button>
+
+    <div class="legal-menu" id="legal-menu">
+      <h4>Información legal</h4>
+      <button onclick="openLegalDoc('aviso')">🧾 Aviso legal y descargo</button>
+      <button onclick="openLegalDoc('terminos')">📜 Términos de uso</button>
+    </div>
+
+    <!-- MODAL LEGAL -->
+    <div id="legal-modal">
+      <div class="content">
+        <h2 id="legal-modal-title"></h2>
+        <div class="scroll" id="legal-modal-body"></div>
+        <button id="cerrar-legal" onclick="cerrarLegalModal()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTENIDO ORIGINAL -->
+    <h1>✨ Portal Akáshico ✨</h1>
+    <p id="tagline" class="subtitulo">
+      Accede a una lectura personalizada de tus Registros Akáshicos.
+    </p>
+
+    <button id="info-btn" onclick="abrirInfo()">
+      ✨ ¿Qué es una Lectura Akáshica?
+    </button>
+
+    <div id="info-modal">
+      <div class="content">
+        <h2 id="info-titulo">¿Qué es una Lectura Akáshica?</h2>
+        <div id="info-texto"></div>
+        <button id="cerrar-info" onclick="cerrarInfo()">Cerrar</button>
+      </div>
+    </div>
+
+    <div class="form-container">
+      <div id="tipo-badge" class="tipo-badge">
+        Lectura Akáshica General
+      </div>
+
+      <h3 style="text-align: center; margin-top: 0;">Datos para la lectura</h3>
+
+      <input type="hidden" id="tipoLectura" value="akashica" />
+
+      <label>Nombre completo</label>
+      <input
+        type="text"
+        id="name"
+        placeholder="Tu nombre completo tal como aparece en tus documentos"
+      />
+
+      <label>Correo electrónico</label>
+      <input
+        type="email"
+        id="email"
+        placeholder="Donde recibirás tu lectura en PDF"
+      />
+
+      <label>Fecha de nacimiento</label>
+      <input type="date" id="birthdate" />
+
+      <label>¿Cómo describirías tu momento actual?</label>
+      <textarea id="estadoActual" rows="3" placeholder=""></textarea>
+
+      <label>Cuéntame un poco de tu personalidad</label>
+      <textarea id="personalidad" rows="3" placeholder=""></textarea>
+
+      <label>¿Qué esperas de esta lectura?</label>
+      <textarea id="objetivo" rows="3" placeholder=""></textarea>
+
+      <label>Intención o pregunta central (opcional)</label>
+      <textarea id="pregunta" rows="3" placeholder=""></textarea>
+    </div>
+
+    <div class="section-box">
+      <button
+        id="boton-pago-principal"
+        class="pay-btn pay-btn-main"
+        onclick="generarLectura()"
+      >
+        🔮 Paga $10 USD para recibir tu Lectura Akáshica
+      </button>
+    </div>
+
+    <div class="section-box section-box-wide" style="margin-top: 40px;">
+      <h3 style="text-align:center; color:#dcd7ff; margin-bottom: 20px;">
+        ¿Qué tipo de lectura deseas explorar?
+      </h3>
+
+      <div
+        style="
+          display:flex;
+          flex-direction: row;
+          justify-content: center;
+          gap: 16px;
+          flex-wrap: wrap;
+        "
+      >
+        <button
+          class="pay-btn pay-btn-option tipo-selector tipo-selector-activo"
+          data-tipo="akashica"
+          onclick="aplicarTipo('akashica')"
+        >
+          🔮 Lectura Akáshica General
+        </button>
+
+        <button
+          class="pay-btn pay-btn-option tipo-selector"
+          data-tipo="vidas"
+          onclick="aplicarTipo('vidas')"
+        >
+          ✨ Vidas Pasadas
+        </button>
+
+        <button
+          class="pay-btn pay-btn-option tipo-selector"
+          data-tipo="futuro"
+          onclick="aplicarTipo('futuro')"
+        >
+          🧿 Camino Futuro y Potenciales
+        </button>
+
+        <button
+          class="pay-btn pay-btn-option tipo-selector"
+          data-tipo="alma"
+          onclick="aplicarTipo('alma')"
+        >
+          💜 Alma Gemela & Vínculos del Alma
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // ================== TEXTOS LEGALES (EDITABLES) ==================
+      const legalTexts = {
+        aviso: `
+<strong>Aviso legal y descargo de responsabilidad</strong><br/><br/>
+Las lecturas ofrecidas a través del Portal Akáshico son de carácter
+<strong>espiritual y simbólico</strong>. No constituyen asesoría médica,
+psicológica, psiquiátrica, financiera, legal ni de ningún otro tipo
+profesional regulado.<br/><br/>
+Nada de lo recibido en una lectura debe entenderse como un diagnóstico,
+tratamiento, promesa de resultado o sustituto de la atención de
+profesionales de la salud, finanzas o derecho. Si atraviesas una situación
+grave de salud física, mental, emocional, económica o legal, acude siempre
+a los servicios profesionales correspondientes.<br/><br/>
+Al utilizar este servicio aceptas que la información canalizada se ofrece
+“tal cual” y que su interpretación y uso dependen exclusivamente de ti.
+La persona creadora del Portal Akáshico no se responsabiliza por
+decisiones, acciones u omisiones que tomes a partir de la lectura.
+        `,
+        terminos: `
+<strong>Términos de uso del Portal Akáshico</strong><br/><br/>
+1. <strong>Servicio ofrecido</strong><br/>
+El Portal Akáshico ofrece lecturas espirituales personalizadas que se
+entregan por correo electrónico. El contenido es simbólico y orientativo,
+y tiene como finalidad la reflexión personal y el acompañamiento
+emocional/espiritual.<br/><br/>
+<strong>2. Proceso de pago y entrega</strong><br/>
+El pago se procesa de forma segura a través de Stripe. Tras confirmarse el
+pago, el sistema genera y envía tu lectura al correo electrónico que
+proporcionaste. En caso de que no recibas la lectura en un plazo razonable
+(aprox. 24 horas), puedes escribir a nuestro correo de contacto:
+<strong>portal.akashico@gmail.com</strong> para revisar tu caso.
+Si corresponde, reenviamos la lectura o gestionamos un reembolso parcial o total.<br/><br/>
+3. <strong>Limitación de responsabilidad</strong><br/>
+No podemos garantizar la disponibilidad ininterrumpida del servicio, ya
+que dependemos de proveedores externos (Stripe, servidores, correo,
+modelos de IA, etc.). En caso de fallos técnicos, se hará todo lo posible
+por resolverlos y cumplir con la entrega. Nuestra responsabilidad se
+limita, en su caso, al reenvío de la lectura o al reembolso del importe
+pagado, según el caso concreto.<br/><br/>
+4. <strong>Uso adecuado</strong><br/>
+Te comprometes a utilizar el Portal Akáshico de forma respetuosa y para
+fines personales. Queda prohibido reutilizar, revender o publicar el
+contenido de las lecturas sin permiso expreso.<br/><br/>
+5. <strong>Actualizaciones</strong><br/>
+Estos términos pueden actualizarse con el tiempo para reflejar cambios en
+el servicio o en la legislación aplicable. La versión vigente será siempre
+la que aparezca en la web en el momento de tu compra.
+        `,
+      };
+
+      // ================== MODAL INFO LECTURAS ==================
+      function abrirInfo() {
+        document.getElementById("info-modal").style.display = "flex";
+      }
+
+      function cerrarInfo() {
+        document.getElementById("info-modal").style.display = "none";
+      }
+
+      // ================== CONFIG TIPOS LECTURA ==================
+      const TIPOS_LECTURA = {
+        akashica: {
+          badge: "Lectura Akáshica General",
+          tagline:
+            "Accede a una lectura canalizada desde tus Registros Akáshicos.",
+          infoTitulo: "¿Qué es una Lectura Akáshica?",
+          infoHtml: `
+            <p>
+              Los Registros Akáshicos se consideran el
+              <strong>archivo eterno del alma</strong>:
+              un campo energético donde se guardan tus memorias profundas,
+              tus aprendizajes, tus heridas, tus dones y los caminos que tu
+              espíritu aún puede recorrer.
+            </p>
+            <p>
+              Una Lectura Akáshica no predice el futuro. Es una apertura
+              espiritual que revela el <strong>por qué</strong> de tu momento
+              actual, las energías que te rodean y lo que tu alma desea que
+              entiendas para avanzar.
+            </p>
+            <p>
+              A través de esta lectura recibes un mensaje canalizado
+              especialmente para ti: un puente simbólico y energético que
+              aporta <strong>claridad, contención emocional y dirección</strong>
+              en momentos de confusión, bloqueo o transformación interna.
+            </p>
+          `,
+          placeholders: {
+            estadoActual:
+              "Por ejemplo: me siento bloqueado, repito ciclos, siento que algo está cambiando pero no sé qué es…",
+            personalidad:
+              "¿Eres más sensible, lógico, impulsivo, reservado, soñador...?",
+            objetivo:
+              "Claridad, paz, entender un patrón, cerrar un ciclo, reconectar con tu esencia, etc.",
+            pregunta:
+              "Si quieres, escribe una pregunta o área de tu vida que quieras comprender mejor.",
+          },
+          botonPago: "🔮 Paga $10 USD para recibir tu Lectura Akáshica",
+        },
+        vidas: {
+          badge: "Lectura de Vidas Pasadas",
+          tagline:
+            "Explora memorias de otras vidas y cómo influyen en tu presente.",
+          infoTitulo: "¿Qué es una Lectura de Vidas Pasadas?",
+          infoHtml: `
+            <p>
+              Una Lectura de Vidas Pasadas busca abrir memorias antiguas que
+              aún tienen eco en tu presente: relaciones, miedos, talentos,
+              lealtades invisibles y experiencias que parecen repetirse sin
+              explicación.
+            </p>
+            <p>
+              No se trata de “ver por curiosidad”, sino de comprender
+              <strong>qué historia del alma</strong> está sosteniendo tus
+              patrones actuales para poder liberarlos, honrarlos o integrarlos
+              de forma más consciente.
+            </p>
+          `,
+          placeholders: {
+            estadoActual:
+              "Por ejemplo: siento miedos irracionales, repito patrones, tengo una conexión muy fuerte con alguien o con un lugar sin motivo aparente…",
+            personalidad:
+              "¿Te sientes viejo por dentro, muy empático, con recuerdos o sensaciones extrañas de otros tiempos…?",
+            objetivo:
+              "Entender un vínculo, sanar un miedo, comprender un talento, cerrar un pacto o promesa antigua, etc.",
+            pregunta:
+              "Si hay una situación concreta que te intriga, descríbela aquí.",
+          },
+          botonPago: "✨ Paga $10 USD para recibir tu Lectura de Vidas Pasadas",
+        },
+        futuro: {
+          badge: "Camino Futuro y Potenciales",
+          tagline:
+            "Recibe guía sobre los caminos y posibilidades que se abren delante de ti.",
+          infoTitulo: "¿Qué es una Lectura de Camino Futuro?",
+          infoHtml: `
+            <p>
+              Esta lectura no fija un destino, sino que explora
+              <strong>potenciales futuros</strong> según tu energía actual:
+              qué caminos se ven más disponibles, qué aprendizajes se acercan y
+              qué movimientos interiores pueden armonizar tu proceso.
+            </p>
+            <p>
+              Es una lectura ideal cuando estás en decisiones importantes,
+              transiciones o cambios de rumbo y necesitas claridad y dirección.
+            </p>
+          `,
+          placeholders: {
+            estadoActual:
+              "Por ejemplo: estoy en un cambio de trabajo, mudanza, cierre de ciclo, no sé qué dirección tomar…",
+            personalidad:
+              "¿Tiendes a planear todo, improvisar, postergar, lanzarte sin pensar…?",
+            objetivo:
+              "Claridad para tomar decisiones, ver posibles caminos, alinear mis acciones con mi propósito, etc.",
+            pregunta:
+              "Escribe la decisión o área de futuro sobre la que te gustaría recibir claridad.",
+          },
+          botonPago:
+            "🧿 Paga $10 USD para recibir tu Lectura de Camino Futuro",
+        },
+        alma: {
+          badge: "Alma Gemela & Vínculos del Alma",
+          tagline:
+            "Profundiza en tus vínculos del alma, relaciones importantes y aprendizajes afectivos.",
+          infoTitulo:
+            "¿Qué es una Lectura de Alma Gemela & Vínculos del Alma?",
+          infoHtml: `
+            <p>
+              Esta lectura se centra en tus <strong>vínculos del alma</strong>:
+              relaciones intensas, almas espejo, vínculos que sanan o hieren,
+              conexiones difíciles de explicar pero imposibles de ignorar.
+            </p>
+            <p>
+              No se limita al amor romántico: también puede hablar de amistades,
+              familia, personas que marcaron tu vida y acuerdos del alma que
+              aún están activos.
+            </p>
+          `,
+          placeholders: {
+            estadoActual:
+              "Por ejemplo: estoy en una relación intensa, no entiendo mi conexión con alguien, repito patrones en el amor…",
+            personalidad:
+              "¿Tiendes a entregarte mucho, a protegerte demasiado, a idealizar, a huir cuando se vuelve profundo…?",
+            objetivo:
+              "Entender un vínculo, sanar heridas afectivas, atraer una relación más consciente, etc.",
+            pregunta:
+              "Describe el vínculo, situación o patrón afectivo que te gustaría comprender mejor.",
+          },
+          botonPago:
+            "💜 Paga $10 USD para recibir tu Lectura de Alma Gemela & Vínculos del Alma",
+        },
+      };
+
+      function aplicarTipo(tipo) {
+        const cfg = TIPOS_LECTURA[tipo] || TIPOS_LECTURA.akashica;
+
+        document.getElementById("tipoLectura").value = tipo;
+        document.getElementById("tipo-badge").innerText = cfg.badge;
+        document.getElementById("tagline").innerText = cfg.tagline;
+        document.getElementById("info-btn").innerText = "✨ " + cfg.infoTitulo;
+        document.getElementById("info-titulo").innerText = cfg.infoTitulo;
+        document.getElementById("info-texto").innerHTML = cfg.infoHtml;
+
+        document.getElementById("estadoActual").placeholder =
+          cfg.placeholders.estadoActual;
+        document.getElementById("personalidad").placeholder =
+          cfg.placeholders.personalidad;
+        document.getElementById("objetivo").placeholder =
+          cfg.placeholders.objetivo;
+        document.getElementById("pregunta").placeholder =
+          cfg.placeholders.pregunta;
+
+        document.getElementById("boton-pago-principal").innerText =
+          cfg.botonPago;
+
+        document.querySelectorAll(".tipo-selector").forEach((btn) => {
+          btn.classList.toggle(
+            "tipo-selector-activo",
+            btn.dataset.tipo === tipo
+          );
+        });
+      }
+
+      // ================== LOADING PAGO ==================
+      function setLoading(isLoading) {
+        const body = document.body;
+        const mainBtn = document.getElementById("boton-pago-principal");
+        const allPayBtns = document.querySelectorAll(".pay-btn");
+
+        if (isLoading) {
+          body.classList.add("loading-cursor");
+          allPayBtns.forEach((btn) => {
+            btn.disabled = true;
+          });
+
+          if (mainBtn) {
+            if (!mainBtn.dataset.originalText) {
+              mainBtn.dataset.originalText = mainBtn.innerText;
+            }
+            mainBtn.classList.add("is-loading");
+            mainBtn.innerText =
+              "⏳ Canalizando tu lectura, por favor espera...";
+          }
+        } else {
+          body.classList.remove("loading-cursor");
+          allPayBtns.forEach((btn) => {
+            btn.disabled = false;
+          });
+
+          if (mainBtn && mainBtn.dataset.originalText) {
+            mainBtn.classList.remove("is-loading");
+            mainBtn.innerText = mainBtn.dataset.originalText;
+          }
+        }
+      }
+
+      // ================== PAGO STRIPE ==================
+      async function generarLectura() {
+        const name = document.getElementById("name").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const birthdate = document.getElementById("birthdate").value;
+        const tipoLectura = document.getElementById("tipoLectura").value;
+
+        if (!name || !email || !birthdate) {
+          alert("Por favor llena tu nombre, correo y fecha de nacimiento.");
+          return;
+        }
+
+        setLoading(true);
+
+        try {
+          const response = await fetch("/api/create-checkout-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tipoLectura,
+              name,
+              email,
+              birthdate,
+              estadoActual: document
+                .getElementById("estadoActual")
+                .value.trim(),
+              personalidad: document
+                .getElementById("personalidad")
+                .value.trim(),
+              objetivo: document.getElementById("objetivo").value.trim(),
+              pregunta: document.getElementById("pregunta").value.trim(),
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.url) {
+            window.location.href = data.url;
+          } else {
+            console.error(data);
+            alert("No se pudo iniciar el pago. Intenta de nuevo.");
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error(error);
+          alert("Hubo un problema al conectar con el servidor.");
+          setLoading(false);
+        }
+      }
+
+      // ================== MENÚ LEGAL ==================
+      function toggleLegalMenu(event) {
+        event.stopPropagation();
+        const menu = document.getElementById("legal-menu");
+        menu.style.display =
+          menu.style.display === "block" ? "none" : "block";
+      }
+
+      function openLegalDoc(tipo) {
+        const modal = document.getElementById("legal-modal");
+        const title = document.getElementById("legal-modal-title");
+        const body = document.getElementById("legal-modal-body");
+        const menu = document.getElementById("legal-menu");
+
+        if (tipo === "aviso") {
+          title.innerText = "Aviso legal y descargo de responsabilidad";
+          body.innerHTML = legalTexts.aviso;
+        } else if (tipo === "terminos") {
+          title.innerText = "Términos de uso del Portal Akáshico";
+          body.innerHTML = legalTexts.terminos;
+        }
+
+        menu.style.display = "none";
+        modal.style.display = "flex";
+      }
+
+      function cerrarLegalModal() {
+        document.getElementById("legal-modal").style.display = "none";
+      }
+
+      // Cerrar menú legal al hacer clic fuera
+      document.addEventListener("click", (e) => {
+        const menu = document.getElementById("legal-menu");
+        const btn = document.getElementById("legal-menu-btn");
+        if (!menu || !btn) return;
+
+        if (
+          menu.style.display === "block" &&
+          !menu.contains(e.target) &&
+          !btn.contains(e.target)
+        ) {
+          menu.style.display = "none";
+        }
+      });
+
+      // Inicializar tipo por defecto
+      document.addEventListener("DOMContentLoaded", () => {
+        aplicarTipo("akashica");
+      });
+    </script>
+    <!-- FOOTER MÍSTICO -->
+<div style="
+  margin-top:50px;
+  text-align:center;
+  font-size:13px;
+  color:#d7c9ff;
+  padding:18px 0;
+  opacity:0.8;
+  letter-spacing:0.3px;
+  background: rgba(20, 15, 40, 0.45);
+  border-radius:12px;
+  width:100%;
+  box-shadow:
+      0 0 12px rgba(125, 66, 255, 0.35),
+      0 0 24px rgba(125, 66, 255, 0.20),
+      inset 0 0 18px rgba(125, 66, 255, 0.25);
+">
+  <span style="color:#c8a8ff; font-weight:600;">Portal Akáshico</span> · 
+  Todos los derechos reservados · Contacto:
+  <strong style="color:#ffccff;">portal.akashico@gmail.com</strong>
+</div>
+  </body>
+</html>
