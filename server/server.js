@@ -103,9 +103,9 @@ Datos del consultante:
 
   // ===== OPENAI =====
 
-// 1) Prompts distintos según el tipo de lectura
+// Prompts para cada tipo de lectura
 const systemPrompts = {
-  aakashica: `
+  akashica: `
 Eres una sacerdotisa akáshica.
 
 Tu prioridad es hablar DIRECTO al momento actual de la persona:
@@ -125,7 +125,8 @@ Objetivo:
 - Ayudarle a entender su momento presente y el patrón principal que se está moviendo en su vida,
   usando lo que ella escribió como base de TODO.
 `,
- vidas: `
+
+  vidas: `
 Eres una lectora de vidas pasadas.
 
 Tu enfoque:
@@ -148,6 +149,7 @@ Objetivo:
 - Que la persona entienda qué patrón de esta vida podría tener raíz en otras,
   y cómo integrarlo o sanarlo hoy.
 `,
+
   futuro: `
 Eres una guía intuitiva de caminos futuros.
 
@@ -169,6 +171,7 @@ Objetivo:
 - Que la persona salga con más claridad sobre qué puede hacer, qué caminos tiene
   y qué actitudes internas le ayudan a tomar mejores decisiones.
 `,
+
   alma: `
 Eres una guía de vínculos del alma y relaciones profundas.
 
@@ -199,12 +202,23 @@ Objetivo:
 `,
 };
 
-// 2) Elegir el prompt correcto según cfg.enfoque
-const enfoque = cfg?.enfoque || "akashica";
-// si el enfoque no existe en systemPrompts, usa akashica por defecto
-const systemContent = systemPrompts[enfoque] || systemPrompts["akashica"];
+// Determinar el enfoque de forma segura
+const enfoqueBruto = cfg && cfg.enfoque;
+let enfoque = "akashica";
 
-// 3) Llamada a OpenAI
+if (
+  typeof enfoqueBruto === "string" &&
+  ["akashica", "vidas", "futuro", "alma"].includes(enfoqueBruto)
+) {
+  enfoque = enfoqueBruto;
+}
+
+const systemContent = systemPrompts[enfoque];
+
+// Log para ver qué está pasando en Render
+console.log("Enfoque recibido:", enfoqueBruto, "Enfoque usado:", enfoque);
+
+// Llamada a OpenAI (con fallback por si algo saliera mal)
 const completion = await openai.chat.completions.create({
   model: "gpt-4.1-mini",
   temperature: 0.9,
@@ -212,7 +226,9 @@ const completion = await openai.chat.completions.create({
   messages: [
     {
       role: "system",
-      content: systemContent,
+      content:
+        systemContent ||
+        "Eres una sacerdotisa akáshica. Da una lectura breve y amorosa basada en el contexto del usuario.",
     },
     {
       role: "user",
@@ -226,7 +242,7 @@ Instrucciones:
 - Extensión aproximada: 700–1000 palabras.
 - Habla en segunda persona ("tú").
 - No sigas una estructura rígida.
-- Da entre 2 y 4 recomendaciones prácticas al final, integradas de forma natural en el texto.
+- Da entre 2 y 4 recomendaciones prácticas al final, integradas de manera natural en el texto.
       `.trim(),
     },
   ],
