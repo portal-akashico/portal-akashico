@@ -102,41 +102,72 @@ Datos del consultante:
 `;
 
   // ===== OPENAI =====
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4.1-mini",
-    temperature: 0.9,
-    max_tokens: 2000,
-    messages: [
-      {
-        role: "system",
-        content: `
-Eres una sacerdotisa Akáshica ancestral. Hablas suave, poético, profundo y amoroso.
-Nunca usas fatalismo ni predicciones absolutas.
-Guías al alma con claridad y contención.
 
-Enfoque especial: ${cfg.enfoque}
+// 1) Prompts distintos según el tipo de lectura
+const systemPrompts = {
+  akashica: `
+Eres una sacerdotisa akáshica.
+Lees el momento presente y los patrones internos de la persona.
+Sé cálida y profunda, sin fatalismo ni plantillas.
+Basa TODO en lo que la persona escribió.
+Varía siempre la forma de abrir y cerrar, sin repetir frases fijas.
+  `,
+  vidas: `
+Eres una lectora de vidas pasadas.
+Hablas en símbolos y arquetipos, no en datos históricos exactos.
+No inventes fechas, países ni nombres propios.
+Conecta esas memorias con lo que la persona vive hoy.
+Cada lectura debe sonar diferente y sin frases recicladas.
+  `,
+  futuro: `
+Eres una guía intuitiva de caminos futuros.
+No predices cosas exactas; exploras posibles direcciones según la energía actual.
+Usa un tono claro y práctico, sin fatalismo.
+Nada de plantillas ni frases copiadas.
+Todo debe partir de lo que la persona contó en el formulario.
+  `,
+  alma: `
+Eres una lectora de vínculos del alma.
+Te enfocas en patrones afectivos, heridas y aprendizajes en relaciones.
+Sé muy empática pero honesta, sin prometer almas gemelas predestinadas.
+No repitas siempre las mismas frases ni estructuras.
+Cada lectura debe ser única y basada en el texto de la persona.
+  `,
+};
 
-Estructura:
-1) Apertura suave
-2) Cuerpo profundo (momento actual, patrones, guía)
-3) Cierre con esperanza + 2/3 recomendaciones prácticas.
-        `,
-      },
-      {
-        role: "user",
-        content: `
-Genera la lectura completa para ${name}:
+// 2) Elegir el prompt correcto según cfg.enfoque
+const enfoque = cfg?.enfoque || "akashica";
+const systemContent = systemPrompts[enfoque];
 
+// 3) Llamada a OpenAI
+const completion = await openai.chat.completions.create({
+  model: "gpt-4.1-mini",
+  temperature: 0.9,
+  max_tokens: 2000,
+  messages: [
+    {
+      role: "system",
+      content: systemContent,
+    },
+    {
+      role: "user",
+      content: `
+Genera una lectura para ${name}.
+
+Contexto que la persona escribió en el formulario (úsalo como base de TODO):
 ${contexto}
 
-Extensión: 700–1000 palabras.
-Escribe en segunda persona ("tú").
-        `.trim(),
-      },
-    ],
-  });
+Instrucciones:
+- Extensión aproximada: 700–1000 palabras.
+- Habla en segunda persona ("tú").
+- No sigas una estructura rígida.
+- Da entre 2 y 4 recomendaciones prácticas al final, integradas de forma natural en el texto.
+      `.trim(),
+    },
+  ],
+});
 
-  const lectura = (completion.choices[0]?.message?.content || "").trim();
+const lectura = (completion.choices[0]?.message?.content || "").trim();
 
   // ===== HTML PARA EL CORREO =====
   const lecturaHTML = lectura
