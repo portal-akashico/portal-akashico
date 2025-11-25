@@ -353,24 +353,24 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
   try {
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: process.env.STRIPE_PRICE_ID,
-          quantity: 1,
-        },
-      ],
-      customer_email: email,
-      success_url: `${BASE_URL}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${BASE_URL}/`,
-      metadata: {
-        tipoLectura,
-        name,
-        email,
-        birthdate,
-      },
-    });
+  mode: "payment",
+  payment_method_types: ["card"],
+  line_items: [
+    {
+      price: process.env.STRIPE_PRICE_ID,
+      quantity: 1,
+    },
+  ],
+  customer_email: email,
+  success_url: `${BASE_URL}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${BASE_URL}/`,
+  metadata: {
+    tipoLectura,
+    name,
+    email,
+    birthdate,
+  },
+});
 
     // Guardamos TODOS los datos del formulario ligados a la sesión
     sessionStore[session.id] = {
