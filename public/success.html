@@ -256,192 +256,200 @@
     </div>
 
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const params = new URLSearchParams(window.location.search);
-        const sessionId = params.get("session_id");
+  // Cuando carga la página, tomamos el token (orderId) que manda PayPal en la URL
+  document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("token"); // PayPal usa ?token=ORDER_ID
 
-        if (!sessionId) {
-          alert(
-            "No se encontró la sesión de pago. Si ya realizaste el pago, por favor vuelve al portal."
-          );
-          window.location.href = "/";
-          return;
-        }
+    if (!orderId) {
+      alert(
+        "No se encontró la orden de pago. Si ya realizaste el pago, por favor vuelve al portal."
+      );
+      window.location.href = "/";
+      return;
+    }
 
-        iniciarProcesoLectura(sessionId);
+    iniciarProcesoLectura(orderId);
+  });
+
+  async function iniciarProcesoLectura(orderId) {
+    try {
+      const resp = await fetch("/api/paypal/capture-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
       });
 
-      async function iniciarProcesoLectura(sessionId) {
-        try {
-          const resp = await fetch("/api/finalizar-lectura", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ session_id: sessionId }),
-          });
+      const data = await resp.json();
 
-          const data = await resp.json();
-
-          if (!resp.ok) {
-            alert(data.error || "No se pudo finalizar la lectura.");
-            window.location.href = "/";
-            return;
-          }
-
-          // Guardamos en localStorage
-          localStorage.setItem("lecturaActual", JSON.stringify(data));
-
-          // Títulos según tipo
-          const TITULOS = {
-            akashica: {
-              principal: "✨ Tu Lectura Akáshica ✨",
-              subtitulo: "Lectura Akáshica — Canalizada",
-            },
-            vidas: {
-              principal: "✨ Tu Lectura de Vidas Pasadas ✨",
-              subtitulo: "Memorias del Alma — Canalizadas",
-            },
-            futuro: {
-              principal: "✨ Tu Lectura de Camino Futuro ✨",
-              subtitulo: "Potenciales y Caminos — Canalizados",
-            },
-            alma: {
-              principal: "✨ Tu Lectura de Alma Gemela ✨",
-              subtitulo: "Vínculos del Alma — Canalizados",
-            },
-          };
-
-          const tipo = data.tipoLectura || "akashica";
-          const cfg = TITULOS[tipo] || TITULOS.akashica;
-
-          document.getElementById("titulo-principal").innerText =
-            cfg.principal;
-          document.getElementById("subtitulo-lectura").innerText =
-            cfg.subtitulo;
-          document.getElementById("lectura-texto").innerText =
-            data.lectura || "";
-
-          // Ocultamos el loader y mostramos lectura + botón PDF
-          const loading = document.getElementById("loading-state");
-          if (loading) loading.style.display = "none";
-
-          const lecturaTexto = document.getElementById("lectura-texto");
-          lecturaTexto.style.opacity = "1";
-
-          const downloadWrapper =
-            document.getElementById("download-wrapper");
-          downloadWrapper.style.display = "block";
-
-          document
-            .getElementById("btn-descargar-lectura")
-            .addEventListener("click", descargarPDF);
-        } catch (err) {
-          console.error(err);
-          alert(
-            "Ocurrió un error al canalizar tu lectura. Si ya se cobró el pago, por favor escríbeme por correo."
-          );
-          window.location.href = "/";
-        }
-      }
-
-      function descargarPDF() {
-        const { jsPDF } = window.jspdf;
-
-        const dataRaw = localStorage.getItem("lecturaActual") || "{}";
-        let data = {};
-        try {
-          data = JSON.parse(dataRaw);
-        } catch (e) {
-          console.error(e);
-        }
-
-        const tipoLectura = data.tipoLectura || "akashica";
-        const texto =
-          document.getElementById("lectura-texto")?.innerText || "";
-        const subtitulo =
-          document.getElementById("subtitulo-lectura")?.innerText ||
-          "Lectura canalizada";
-
-        const TITULOS_PDF = {
-          akashica: "Tu Lectura Akashica",
-          vidas: "Tu Lectura de Vidas Pasadas",
-          futuro: "Tu Lectura de Camino Futuro",
-          alma: "Tu Lectura de Alma Gemela & Vinculos del Alma",
-        };
-        const tituloPDF =
-          TITULOS_PDF[tipoLectura] || TITULOS_PDF.akashica;
-
-        const pdf = new jsPDF({
-          unit: "pt",
-          format: "letter",
-        });
-
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-
-        pdf.setFillColor(5, 5, 18);
-        pdf.rect(0, 0, pageWidth, pageHeight, "F");
-
-        pdf.setDrawColor(109, 52, 255);
-        pdf.setLineWidth(1.2);
-        pdf.roundedRect(24, 24, pageWidth - 48, pageHeight - 48, 12, 12);
-
-        pdf.setFont("Times", "Bold");
-        pdf.setFontSize(20);
-        pdf.setTextColor(233, 197, 255);
-        pdf.text(tituloPDF, pageWidth / 2, 60, { align: "center" });
-
-        pdf.setFont("Times", "Normal");
-        pdf.setFontSize(14);
-        pdf.setTextColor(243, 207, 255);
-        pdf.text(subtitulo, pageWidth / 2, 84, { align: "center" });
-
-        pdf.setDrawColor(120, 80, 255);
-        pdf.setLineWidth(0.6);
-        pdf.line(72, 100, pageWidth - 72, 100);
-
-        pdf.setFont("Times", "Normal");
-        pdf.setFontSize(12);
-        pdf.setTextColor(230, 225, 255);
-
-        const marginX = 60;
-        const usableWidth = pageWidth - marginX * 2;
-        const lineHeight = 18;
-        let y = 120;
-
-        const parrafos = texto.split(/\n{2,}/);
-
-        function nuevaPagina() {
-          pdf.addPage();
-          pdf.setFillColor(5, 5, 18);
-          pdf.rect(0, 0, pageWidth, pageHeight, "F");
-          pdf.setDrawColor(109, 52, 255);
-          pdf.setLineWidth(1.2);
-          pdf.roundedRect(24, 24, pageWidth - 48, pageHeight - 48, 12, 12);
-
-          pdf.setFont("Times", "Normal");
-          pdf.setFontSize(12);
-          pdf.setTextColor(230, 225, 255);
-          y = 60;
-        }
-
-        parrafos.forEach((p) => {
-          const lineas = pdf.splitTextToSize(p.trim(), usableWidth);
-
-          lineas.forEach((linea) => {
-            if (y > pageHeight - 72) nuevaPagina();
-            pdf.text(linea, marginX, y);
-            y += lineHeight;
-          });
-
-          y += lineHeight;
-        });
-
-        pdf.save(`Lectura_${tipoLectura}_${Date.now()}.pdf`);
-      }
-
-      function volverAlPortal() {
+      if (!resp.ok) {
+        alert(data.error || "No se pudo finalizar la lectura.");
         window.location.href = "/";
+        return;
       }
-    </script>
+
+      // PayPal devuelve algo como: { status: "COMPLETED", resultado: { ... } }
+      if (data.status !== "COMPLETED" || !data.resultado) {
+        alert(
+          "El pago no se marcó como completado. Si ves el cargo en tu cuenta, escríbeme con tu comprobante."
+        );
+        window.location.href = "/";
+        return;
+      }
+
+      const resultado = data.resultado;
+
+      // Guardamos SOLO el resultado (tipoLectura, lectura, etc.)
+      localStorage.setItem("lecturaActual", JSON.stringify(resultado));
+
+      // Títulos según tipo
+      const TITULOS = {
+        akashica: {
+          principal: "✨ Tu Lectura Akáshica ✨",
+          subtitulo: "Lectura Akáshica — Canalizada",
+        },
+        vidas: {
+          principal: "✨ Tu Lectura de Vidas Pasadas ✨",
+          subtitulo: "Memorias del Alma — Canalizadas",
+        },
+        futuro: {
+          principal: "✨ Tu Lectura de Camino Futuro ✨",
+          subtitulo: "Potenciales y Caminos — Canalizados",
+        },
+        alma: {
+          principal: "✨ Tu Lectura de Alma Gemela ✨",
+          subtitulo: "Vínculos del Alma — Canalizados",
+        },
+      };
+
+      const tipo = resultado.tipoLectura || "akashica";
+      const cfg = TITULOS[tipo] || TITULOS.akashica;
+
+      document.getElementById("titulo-principal").innerText = cfg.principal;
+      document.getElementById("subtitulo-lectura").innerText = cfg.subtitulo;
+      document.getElementById("lectura-texto").innerText =
+        resultado.lectura || "";
+
+      // Ocultamos el loader y mostramos lectura + botón PDF
+      const loading = document.getElementById("loading-state");
+      if (loading) loading.style.display = "none";
+
+      const lecturaTexto = document.getElementById("lectura-texto");
+      lecturaTexto.style.opacity = "1";
+
+      const downloadWrapper = document.getElementById("download-wrapper");
+      downloadWrapper.style.display = "block";
+
+      document
+        .getElementById("btn-descargar-lectura")
+        .addEventListener("click", descargarPDF);
+    } catch (err) {
+      console.error(err);
+      alert(
+        "Ocurrió un error al canalizar tu lectura. Si ya se cobró el pago, por favor escríbeme por correo."
+      );
+      window.location.href = "/";
+    }
+  }
+
+  function descargarPDF() {
+    const { jsPDF } = window.jspdf;
+
+    const dataRaw = localStorage.getItem("lecturaActual") || "{}";
+    let data = {};
+    try {
+      data = JSON.parse(dataRaw);
+    } catch (e) {
+      console.error(e);
+    }
+
+    const tipoLectura = data.tipoLectura || "akashica";
+    const texto =
+      document.getElementById("lectura-texto")?.innerText || "";
+    const subtitulo =
+      document.getElementById("subtitulo-lectura")?.innerText ||
+      "Lectura canalizada";
+
+    const TITULOS_PDF = {
+      akashica: "Tu Lectura Akashica",
+      vidas: "Tu Lectura de Vidas Pasadas",
+      futuro: "Tu Lectura de Camino Futuro",
+      alma: "Tu Lectura de Alma Gemela & Vinculos del Alma",
+    };
+    const tituloPDF = TITULOS_PDF[tipoLectura] || TITULOS_PDF.akashica;
+
+    const pdf = new jsPDF({
+      unit: "pt",
+      format: "letter",
+    });
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    pdf.setFillColor(5, 5, 18);
+    pdf.rect(0, 0, pageWidth, pageHeight, "F");
+
+    pdf.setDrawColor(109, 52, 255);
+    pdf.setLineWidth(1.2);
+    pdf.roundedRect(24, 24, pageWidth - 48, pageHeight - 48, 12, 12);
+
+    pdf.setFont("Times", "Bold");
+    pdf.setFontSize(20);
+    pdf.setTextColor(233, 197, 255);
+    pdf.text(tituloPDF, pageWidth / 2, 60, { align: "center" });
+
+    pdf.setFont("Times", "Normal");
+    pdf.setFontSize(14);
+    pdf.setTextColor(243, 207, 255);
+    pdf.text(subtitulo, pageWidth / 2, 84, { align: "center" });
+
+    pdf.setDrawColor(120, 80, 255);
+    pdf.setLineWidth(0.6);
+    pdf.line(72, 100, pageWidth - 72, 100);
+
+    pdf.setFont("Times", "Normal");
+    pdf.setFontSize(12);
+    pdf.setTextColor(230, 225, 255);
+
+    const marginX = 60;
+    const usableWidth = pageWidth - marginX * 2;
+    const lineHeight = 18;
+    let y = 120;
+
+    const parrafos = texto.split(/\n{2,}/);
+
+    function nuevaPagina() {
+      pdf.addPage();
+      pdf.setFillColor(5, 5, 18);
+      pdf.rect(0, 0, pageWidth, pageHeight, "F");
+      pdf.setDrawColor(109, 52, 255);
+      pdf.setLineWidth(1.2);
+      pdf.roundedRect(24, 24, pageWidth - 48, pageHeight - 48, 12, 12);
+
+      pdf.setFont("Times", "Normal");
+      pdf.setFontSize(12);
+      pdf.setTextColor(230, 225, 255);
+      y = 60;
+    }
+
+    parrafos.forEach((p) => {
+      const lineas = pdf.splitTextToSize(p.trim(), usableWidth);
+
+      lineas.forEach((linea) => {
+        if (y > pageHeight - 72) nuevaPagina();
+        pdf.text(linea, marginX, y);
+        y += lineHeight;
+      });
+
+      y += lineHeight;
+    });
+
+    pdf.save(`Lectura_${tipoLectura}_${Date.now()}.pdf`);
+  }
+
+  function volverAlPortal() {
+    window.location.href = "/";
+  }
+</script>
   </body>
 </html>
