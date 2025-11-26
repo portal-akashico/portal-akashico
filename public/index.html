@@ -369,53 +369,53 @@
       }
 
       /* Caja de precio con descuento */
-.price-box {
-  margin-top: 18px;
-  margin-bottom: 12px;
-  text-align: center;
-  color: #e5d8ff;
-  font-size: 14px;
-}
+      .price-box {
+        margin-top: 18px;
+        margin-bottom: 12px;
+        text-align: center;
+        color: #e5d8ff;
+        font-size: 14px;
+      }
 
-.price-box .price-line {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
-}
+      .price-box .price-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+      }
 
-.price-box .old-price {
-  text-decoration: line-through;
-  opacity: 0.45;
-  font-size: 15px;
-}
+      .price-box .old-price {
+        text-decoration: line-through;
+        opacity: 0.45;
+        font-size: 15px;
+      }
 
-.price-box .new-price {
-  color: #ffd86f;
-  font-size: 17px;
-  font-weight: 700;
-}
+      .price-box .new-price {
+        color: #ffd86f;
+        font-size: 17px;
+        font-weight: 700;
+      }
 
-.price-box .arrow {
-  opacity: 0.7;
-}
+      .price-box .arrow {
+        opacity: 0.7;
+      }
 
-.price-box .price-tagline {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #c9baff;
-}
-
+      .price-box .price-tagline {
+        margin-top: 4px;
+        font-size: 12px;
+        color: #c9baff;
+      }
     </style>
-     <!-- Flatpickr: estilos del calendario -->
-  <link 
-    rel="stylesheet" 
-    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
-  />
-  <link 
-    rel="stylesheet" 
-    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css"
-  />
+
+    <!-- Flatpickr: estilos del calendario -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css"
+    />
   </head>
 
   <body>
@@ -505,14 +505,14 @@
       />
 
       <label>Fecha de nacimiento</label>
-<input
-  type="text"
-  id="birthdate"
-  placeholder="dd/mm/aaaa"
-  autocomplete="off"
-  inputmode="numeric"
-  maxlength="10"
-/>
+      <input
+        type="text"
+        id="birthdate"
+        placeholder="dd/mm/aaaa"
+        autocomplete="off"
+        inputmode="numeric"
+        maxlength="10"
+      />
 
       <label>¿Cómo describirías tu momento actual?</label>
       <textarea id="estadoActual" rows="3" placeholder=""></textarea>
@@ -528,26 +528,24 @@
     </div>
 
     <div class="section-box">
+      <!-- Caja del descuento -->
+      <div class="price-box">
+        <div class="price-line">
+          <span class="old-price">$249 MXN</span>
+          <span class="arrow">→</span>
+          <span class="new-price">$169 MXN</span>
+        </div>
+        <p class="price-tagline">Descuento especial por lanzamiento ✨</p>
+      </div>
 
-<!-- Caja del descuento -->
-<div class="price-box">
-  <div class="price-line">
-    <span class="old-price">$249 MXN</span>
-    <span class="arrow">→</span>
-    <span class="new-price">$169 MXN</span>
-  </div>
-  <p class="price-tagline">Descuento especial por lanzamiento ✨</p>
-</div>
-
-<button
-  id="boton-pago-principal"
-  class="pay-btn pay-btn-main"
-  onclick="generarLectura()"
->
-  🔮 Paga $169 MXN para recibir tu Lectura Akáshica
-</button>
-
-</div>
+      <button
+        id="boton-pago-principal"
+        class="pay-btn pay-btn-main"
+        onclick="generarLectura()"
+      >
+        🔮 Paga $169 MXN para recibir tu Lectura Akáshica
+      </button>
+    </div>
 
     <div class="section-box section-box-wide" style="margin-top: 40px;">
       <h3 style="text-align:center; color:#dcd7ff; margin-bottom: 20px;">
@@ -598,7 +596,6 @@
     </div>
 
     <script>
-
       // ================== TEXTOS LEGALES (EDITABLES) ==================
       const legalTexts = {
         aviso: `
@@ -625,7 +622,7 @@ entregan por correo electrónico. El contenido es simbólico y orientativo,
 y tiene como finalidad la reflexión personal y el acompañamiento
 emocional/espiritual.<br/><br/>
 <strong>2. Proceso de pago y entrega</strong><br/>
-El pago se procesa de forma segura a través de Stripe. Tras confirmarse el
+El pago se procesa de forma segura a través de PayPal. Tras confirmarse el
 pago, el sistema genera y envía tu lectura al correo electrónico que
 proporcionaste. En caso de que no recibas la lectura en un plazo razonable
 (aprox. 24 horas), puedes escribir a nuestro correo de contacto:
@@ -633,7 +630,7 @@ proporcionaste. En caso de que no recibas la lectura en un plazo razonable
 Si corresponde, reenviamos la lectura o gestionamos un reembolso parcial o total.<br/><br/>
 3. <strong>Limitación de responsabilidad</strong><br/>
 No podemos garantizar la disponibilidad ininterrumpida del servicio, ya
-que dependemos de proveedores externos (Stripe, servidores, correo,
+que dependemos de proveedores externos (PayPal, servidores, correo,
 modelos de IA, etc.). En caso de fallos técnicos, se hará todo lo posible
 por resolverlos y cumplir con la entrega. Nuestra responsabilidad se
 limita, en su caso, al reenvío de la lectura o al reembolso del importe
@@ -727,7 +724,8 @@ la que aparezca en la web en el momento de tu compra.
             pregunta:
               "Si hay una situación concreta que te intriga, descríbela aquí.",
           },
-          botonPago: "✨ Paga $169 MXN para recibir tu Lectura de Vidas Pasadas",
+          botonPago:
+            "✨ Paga $169 MXN para recibir tu Lectura de Vidas Pasadas",
         },
         futuro: {
           badge: "Camino Futuro y Potenciales",
@@ -855,7 +853,7 @@ la que aparezca en la web en el momento de tu compra.
         }
       }
 
-      // ================== PAGO STRIPE ==================
+      // ================== PAGO PAYPAL ==================
       async function generarLectura() {
         const name = document.getElementById("name").value.trim();
         const email = document.getElementById("email").value.trim();
@@ -870,7 +868,7 @@ la que aparezca en la web en el momento de tu compra.
         setLoading(true);
 
         try {
-          const response = await fetch("/api/create-checkout-session", {
+          const response = await fetch("/api/paypal/create-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -890,9 +888,11 @@ la que aparezca en la web en el momento de tu compra.
           });
 
           const data = await response.json();
+          console.log("create-order:", data);
 
-          if (data.url) {
-            window.location.href = data.url;
+          if (data.approveUrl) {
+            // Mandamos al usuario a PayPal
+            window.location.href = data.approveUrl;
           } else {
             console.error(data);
             alert("No se pudo iniciar el pago. Intenta de nuevo.");
@@ -955,91 +955,94 @@ la que aparezca en la web en el momento de tu compra.
         aplicarTipo("akashica");
       });
     </script>
+
     <!-- FOOTER MÍSTICO -->
-<div style="
-  margin-top:50px;
-  text-align:center;
-  font-size:13px;
-  color:#d7c9ff;
-  padding:18px 0;
-  opacity:0.8;
-  letter-spacing:0.3px;
-  background: rgba(20, 15, 40, 0.45);
-  border-radius:12px;
-  width:100%;
-  box-shadow:
-      0 0 12px rgba(125, 66, 255, 0.35),
-      0 0 24px rgba(125, 66, 255, 0.20),
-      inset 0 0 18px rgba(125, 66, 255, 0.25);
-">
-  <span style="color:#c8a8ff; font-weight:600;">Portal Akáshico</span> · 
-  Todos los derechos reservados · Contacto:
-  <strong style="color:#ffccff;">portal.akashico@gmail.com</strong>
-</div>
+    <div
+      style="
+        margin-top:50px;
+        text-align:center;
+        font-size:13px;
+        color:#d7c9ff;
+        padding:18px 0;
+        opacity:0.8;
+        letter-spacing:0.3px;
+        background: rgba(20, 15, 40, 0.45);
+        border-radius:12px;
+        width:100%;
+        box-shadow:
+          0 0 12px rgba(125, 66, 255, 0.35),
+          0 0 24px rgba(125, 66, 255, 0.20),
+          inset 0 0 18px rgba(125, 66, 255, 0.25);
+      "
+    >
+      <span style="color:#c8a8ff; font-weight:600;">Portal Akáshico</span> ·
+      Todos los derechos reservados · Contacto:
+      <strong style="color:#ffccff;">portal.akashico@gmail.com</strong>
+    </div>
 
-<!-- Calendario Flatpickr -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
-  // 1) Flatpickr solo para validar, sin abrir calendario
-  flatpickr("#birthdate", {
-    dateFormat: "d/m/Y",
-    maxDate: "today",
-    allowInput: true,   // deja escribir a mano
-    clickOpens: false,  // NO abre el calendario
-    disableMobile: true // usa siempre este comportamiento
-  });
+    <!-- Calendario Flatpickr -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+      // 1) Flatpickr solo para validar, sin abrir calendario
+      flatpickr("#birthdate", {
+        dateFormat: "d/m/Y",
+        maxDate: "today",
+        allowInput: true, // deja escribir a mano
+        clickOpens: false, // NO abre el calendario
+        disableMobile: true, // usa siempre este comportamiento
+      });
 
-  // 2) Máscara de escritura dd/mm/aaaa
-  const birthInput = document.getElementById("birthdate");
+      // 2) Máscara de escritura dd/mm/aaaa
+      const birthInput = document.getElementById("birthdate");
 
-  birthInput.addEventListener("input", (e) => {
-    // Solo números y máximo 8 dígitos
-    let v = e.target.value.replace(/\D/g, "").slice(0, 8);
+      birthInput.addEventListener("input", (e) => {
+        // Solo números y máximo 8 dígitos
+        let v = e.target.value.replace(/\D/g, "").slice(0, 8);
 
-    if (v.length >= 5) {
-      // dd/mm/aaaa
-      e.target.value = v.slice(0, 2) + "/" + v.slice(2, 4) + "/" + v.slice(4);
-    } else if (v.length >= 3) {
-      // dd/mm
-      e.target.value = v.slice(0, 2) + "/" + v.slice(2);
-    } else {
-      // d ó dd
-      e.target.value = v;
-    }
-  });
+        if (v.length >= 5) {
+          // dd/mm/aaaa
+          e.target.value =
+            v.slice(0, 2) + "/" + v.slice(2, 4) + "/" + v.slice(4);
+        } else if (v.length >= 3) {
+          // dd/mm
+          e.target.value = v.slice(0, 2) + "/" + v.slice(2);
+        } else {
+          // d ó dd
+          e.target.value = v;
+        }
+      });
 
-  // 3) Validación básica al salir del campo
-  birthInput.addEventListener("blur", () => {
-    const value = birthInput.value.trim();
-    if (!value) return;
+      // 3) Validación básica al salir del campo
+      birthInput.addEventListener("blur", () => {
+        const value = birthInput.value.trim();
+        if (!value) return;
 
-    const m = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (!m) {
-      alert("Usa el formato dd/mm/aaaa, por favor.");
-      birthInput.focus();
-      return;
-    }
+        const m = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (!m) {
+          alert("Usa el formato dd/mm/aaaa, por favor.");
+          birthInput.focus();
+          return;
+        }
 
-    const dia = parseInt(m[1], 10);
-    const mes = parseInt(m[2], 10);
-    const ano = parseInt(m[3], 10);
+        const dia = parseInt(m[1], 10);
+        const mes = parseInt(m[2], 10);
+        const ano = parseInt(m[3], 10);
 
-    // Rangos básicos
-    if (mes < 1 || mes > 12 || dia < 1 || dia > 31 || ano < 1900) {
-      alert("Revisa que la fecha exista (dd/mm/aaaa).");
-      birthInput.focus();
-      return;
-    }
+        // Rangos básicos
+        if (mes < 1 || mes > 12 || dia < 1 || dia > 31 || ano < 1900) {
+          alert("Revisa que la fecha exista (dd/mm/aaaa).");
+          birthInput.focus();
+          return;
+        }
 
-    // Opcional: que no sea fecha futura
-    const hoy = new Date();
-    const fecha = new Date(ano, mes - 1, dia);
-    if (fecha > hoy) {
-      alert("La fecha de nacimiento no puede ser futura.");
-      birthInput.focus();
-    }
-  });
-</script>
-
+        // Opcional: que no sea fecha futura
+        const hoy = new Date();
+        const fecha = new Date(ano, mes - 1, dia);
+        if (fecha > hoy) {
+          alert("La fecha de nacimiento no puede ser futura.");
+          birthInput.focus();
+        }
+      });
+    </script>
   </body>
 </html>
