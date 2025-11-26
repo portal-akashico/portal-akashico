@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const fetch = require("node-fetch"); // npm i node-fetch@2
 
 // Cargar .env desde la raíz del proyecto (../.env)
 require("dotenv").config({
@@ -8,11 +9,8 @@ require("dotenv").config({
 });
 
 console.log("OPENAI_API_KEY:", !!process.env.OPENAI_API_KEY);
-console.log("STRIPE_SECRET_KEY:", process.env.STRIPE_SECRET_KEY);
-console.log("STRIPE_PRICE_ID:", process.env.STRIPE_PRICE_ID);
-
-// --- Stripe ---
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+console.log("PAYPAL_CLIENT_ID:", !!process.env.PAYPAL_CLIENT_ID);
+console.log("PAYPAL_MODE:", process.env.PAYPAL_MODE);
 
 // --- OpenAI ---
 const OpenAI = require("openai");
@@ -24,12 +22,44 @@ const openai = new OpenAI({
 const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// --- PayPal config ---
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
+const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
+const PAYPAL_MODE = process.env.PAYPAL_MODE || "sandbox";
+
+const PAYPAL_BASE_URL =
+  PAYPAL_MODE === "live"
+    ? "https://api-m.paypal.com"
+    : "https://api-m.sandbox.paypal.com";
+
+async function getPayPalAccessToken() {
+  const auth = Buffer.from(
+    `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`
+  ).toString("base64");
+
+  const res = await fetch(`${PAYPAL_BASE_URL}/v1/oauth2/token`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "grant_type=client_credentials",
+  });
+
+  if (!res.ok) {
+    console.error("❌ Error obteniendo token de PayPal:", await res.text());
+    throw new Error("No se pudo obtener token de PayPal");
+  }
+
+  const data = await res.json();
+  return data.access_token;
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-// Guardamos en memoria los datos del formulario ligados a la sesión de Stripe
-// (esto es suficiente para tu proyecto actual; si reinicias el server se pierden, lo cual está ok en dev)
+// Guardamos en memoria los datos del formulario ligados a la ORDEN de PayPal
 const sessionStore = {};
 
 // Middlewares
@@ -48,22 +78,22 @@ const TIPOS_LECTURA = {
   akashica: {
     titulo: "Lectura Akáshica — Canalizada",
     subject: "Tu Lectura Akáshica ✨",
-    enfoque: "lectura general desde los Registros Akáshicos.",
+    enfoque: "akashica",
   },
   vidas: {
     titulo: "Lectura de Vidas Pasadas — Memorias del Alma",
     subject: "Tu Lectura de Vidas Pasadas ✨",
-    enfoque: "memorias antiguas y patrones que siguen activos.",
+    enfoque: "vidas",
   },
   futuro: {
     titulo: "Lectura de Camino Futuro — Potenciales y Caminos",
     subject: "Tu Lectura de Camino Futuro ✨",
-    enfoque: "potenciales futuros según la energía actual.",
+    enfoque: "futuro",
   },
   alma: {
     titulo: "Lectura de Alma Gemela & Vínculos del Alma",
     subject: "Tu Lectura de Alma Gemela ✨",
-    enfoque: "vínculos profundos, patrones afectivos y conexiones.",
+    enfoque: "alma",
   },
 };
 
@@ -101,11 +131,11 @@ Datos del consultante:
 - Pregunta central: ${pregunta || "no especificada"}
 `;
 
- // ===== OPENAI =====
+  // ===== OPENAI =====
 
-// 1) Prompts para cada tipo de lectura
-const systemPrompts = {
-  akashica: `
+  // 1) Prompts para cada tipo de lectura
+  const systemPrompts = {
+    akashica: `
 Eres una sacerdotisa akáshica.
 
 Tu prioridad es hablar DIRECTO al momento actual de la persona:
@@ -129,7 +159,7 @@ Objetivo:
   y qué está intentando mostrarle su alma a través de esta etapa.
 `,
 
-  vidas: `
+    vidas: `
 Eres una lectora de vidas pasadas.
 
 Enfoque:
@@ -157,7 +187,7 @@ Objetivo:
   y cómo puede integrarlo o sanarlo HOY, sin quedarse atrapada solo en la curiosidad.
 `,
 
-  futuro: `
+    futuro: `
 Eres una guía intuitiva de caminos futuros y toma de decisiones.
 
 Enfoque:
@@ -187,7 +217,7 @@ Objetivo:
   - y qué movimientos pueden ayudarle a crear un futuro más alineado.
 `,
 
-  alma: `
+    alma: `
 Eres una guía de vínculos del alma y relaciones profundas.
 
 Enfoque:
@@ -217,39 +247,38 @@ Objetivo:
 - Mostrar con claridad qué está pasando a nivel del alma en ese vínculo o patrón,
   qué está intentando enseñarle y cómo puede cuidarse mejor a sí misma en el amor.
 `,
-};
+  };
 
-// 2) Determinar el enfoque de forma segura (para evitar null/undefined)
-const enfoqueBruto = cfg && cfg.enfoque;
-let enfoque = "akashica";
+  // 2) Determinar el enfoque de forma segura
+  const enfoqueBruto = cfg && cfg.enfoque;
+  let enfoque = "akashica";
 
-if (
-  typeof enfoqueBruto === "string" &&
-  ["akashica", "vidas", "futuro", "alma"].includes(enfoqueBruto)
-) {
-  enfoque = enfoqueBruto;
-}
+  if (
+    typeof enfoqueBruto === "string" &&
+    ["akashica", "vidas", "futuro", "alma"].includes(enfoqueBruto)
+  ) {
+    enfoque = enfoqueBruto;
+  }
 
-const systemContent = systemPrompts[enfoque];
+  const systemContent = systemPrompts[enfoque];
 
-// Log para depurar en Render si algo raro llega
-console.log("Enfoque recibido:", enfoqueBruto, "→ Enfoque usado:", enfoque);
+  console.log("Enfoque recibido:", enfoqueBruto, "→ Enfoque usado:", enfoque);
 
-// 3) Llamada a OpenAI (con fallback para evitar errores por null)
-const completion = await openai.chat.completions.create({
-  model: "gpt-4.1-mini",
-  temperature: 0.9,
-  max_tokens: 2000,
-  messages: [
-    {
-      role: "system",
-      content:
-        systemContent ||
-        "Eres una sacerdotisa akáshica. Da una lectura amorosa, clara y personalizada basada en el contexto del usuario.",
-    },
-    {
-      role: "user",
-      content: `
+  // 3) Llamada a OpenAI
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4.1-mini",
+    temperature: 0.9,
+    max_tokens: 2000,
+    messages: [
+      {
+        role: "system",
+        content:
+          systemContent ||
+          "Eres una sacerdotisa akáshica. Da una lectura amorosa, clara y personalizada basada en el contexto del usuario.",
+      },
+      {
+        role: "user",
+        content: `
 Genera una lectura para ${name}.
 
 Contexto que la persona escribió en el formulario (úsalo como base de TODO):
@@ -262,12 +291,12 @@ Instrucciones generales:
 - Da entre 2 y 4 recomendaciones prácticas al final, integradas de manera natural en el texto
   (pueden ir en lista o en párrafos).
       `.trim(),
-    },
-  ],
-});
+      },
+    ],
+  });
 
-// 4) Texto final de la lectura
-const lectura = (completion.choices[0]?.message?.content || "").trim();
+  // 4) Texto final de la lectura
+  const lectura = (completion.choices[0]?.message?.content || "").trim();
 
   // ===== HTML PARA EL CORREO =====
   const lecturaHTML = lectura
@@ -293,7 +322,7 @@ const lectura = (completion.choices[0]?.message?.content || "").trim();
   let emailEnviado = false;
   try {
     const data = await resend.emails.send({
-      from: process.env.EMAIL_FROM, // "Portal Akáshico ✨ <portal@resend.dev>"
+      from: process.env.EMAIL_FROM,
       to: email,
       subject: cfg.subject,
       html,
@@ -314,8 +343,8 @@ const lectura = (completion.choices[0]?.message?.content || "").trim();
 }
 
 // =========================================
-//   RUTA ORIGINAL /api/lectura (sigue
-//   funcionando por si la usas directo)
+//   RUTA ORIGINAL /api/lectura
+//   (sigue disponible si la quieres usar)
 // =========================================
 app.post("/api/lectura", async (req, res) => {
   try {
@@ -330,10 +359,10 @@ app.post("/api/lectura", async (req, res) => {
 });
 
 // =========================================
-//   1) CREAR SESIÓN DE CHECKOUT STRIPE
-//      (la llama tu index.html)
+//   1) CREAR ORDEN DE PAYPAL
+//      (la llama tu formulario inicial)
 // =========================================
-app.post("/api/create-checkout-session", async (req, res) => {
+app.post("/api/paypal/create-order", async (req, res) => {
   const {
     tipoLectura = "akashica",
     name,
@@ -352,28 +381,53 @@ app.post("/api/create-checkout-session", async (req, res) => {
   }
 
   try {
-    const session = await stripe.checkout.sessions.create({
-  mode: "payment",
-  payment_method_types: ["card"],
-  line_items: [
-    {
-      price: process.env.STRIPE_PRICE_ID,
-      quantity: 1,
-    },
-  ],
-  customer_email: email,
-  success_url: `${BASE_URL}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-  cancel_url: `${BASE_URL}/`,
-  metadata: {
-    tipoLectura,
-    name,
-    email,
-    birthdate,
-  },
-});
+    const accessToken = await getPayPalAccessToken();
 
-    // Guardamos TODOS los datos del formulario ligados a la sesión
-    sessionStore[session.id] = {
+    const body = {
+      intent: "CAPTURE",
+      purchase_units: [
+        {
+          amount: {
+            currency_code: "MXN",
+            value: "149.00", // 💸 tu precio aquí
+          },
+        },
+      ],
+      application_context: {
+        brand_name: "Portal Akáshico",
+        landing_page: "LOGIN",
+        user_action: "PAY_NOW",
+       return_url: `${BASE_URL}/success.html`,
+        cancel_url: `${BASE_URL}/`,
+      },
+    };
+
+    const orderRes = await fetch(`${PAYPAL_BASE_URL}/v2/checkout/orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!orderRes.ok) {
+      console.error("❌ Error creando orden PayPal:", await orderRes.text());
+      return res.status(500).json({ error: "No se pudo crear la orden" });
+    }
+
+    const orderData = await orderRes.json();
+
+    const approveLink = orderData.links.find((l) => l.rel === "approve");
+
+    if (!approveLink) {
+      return res
+        .status(500)
+        .json({ error: "No se encontró link de aprobación" });
+    }
+
+    // Guardamos TODOS los datos del formulario ligados a la orden de PayPal
+    sessionStore[orderData.id] = {
       tipoLectura,
       name,
       email,
@@ -384,58 +438,81 @@ app.post("/api/create-checkout-session", async (req, res) => {
       pregunta,
     };
 
-    console.log("✅ Sesión de Stripe creada:", session.id);
+    console.log("✅ Orden de PayPal creada:", orderData.id);
 
-    res.json({ url: session.url });
-  } catch (err) {
-    console.error("❌ Error al crear sesión de Stripe:", err);
-    res.status(500).json({
-      error: "No se pudo crear la sesión de pago.",
+    // Regresamos la URL para redirigir al usuario a PayPal
+    res.json({
+      orderId: orderData.id,
+      approveUrl: approveLink.href,
     });
+  } catch (err) {
+    console.error("❌ Error en /api/paypal/create-order:", err);
+    res.status(500).json({ error: "Error interno al crear orden" });
   }
 });
 
 // =========================================
-//   2) FINALIZAR LECTURA TRAS PAGO
-//      (la llama success.html con session_id)
+//   2) CAPTURAR ORDEN + GENERAR LECTURA
+//      (la llama pago-completado.html)
 // =========================================
-app.post("/api/finalizar-lectura", async (req, res) => {
-  const { session_id } = req.body;
-
-  if (!session_id) {
-    return res
-      .status(400)
-      .json({ error: "Falta el session_id de Stripe." });
-  }
-
+app.post("/api/paypal/capture-order", async (req, res) => {
   try {
-    const session = await stripe.checkout.sessions.retrieve(session_id);
+    const { orderId } = req.body;
 
-    if (session.payment_status !== "paid") {
-      return res
-        .status(400)
-        .json({ error: "El pago aún no está completado." });
+    if (!orderId) {
+      return res.status(400).json({ error: "Falta orderId" });
     }
 
-    const datos = sessionStore[session_id];
+    const accessToken = await getPayPalAccessToken();
+
+    const captureRes = await fetch(
+      `${PAYPAL_BASE_URL}/v2/checkout/orders/${orderId}/capture`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!captureRes.ok) {
+      console.error("❌ Error capturando orden PayPal:", await captureRes.text());
+      return res
+        .status(500)
+        .json({ error: "No se pudo capturar la orden en PayPal" });
+    }
+
+    const captureData = await captureRes.json();
+
+    const status = captureData.status;
+    console.log("Orden capturada:", orderId, "status:", status);
+
+    if (status !== "COMPLETED") {
+      return res.json({ status });
+    }
+
+    const datos = sessionStore[orderId];
     if (!datos) {
       return res.status(400).json({
+        status: "COMPLETED",
         error:
-          "No se encontraron los datos de la lectura para esta sesión. Si ya pagaste, contáctame por correo.",
+          "El pago se completó, pero no se encontraron los datos de la lectura. Escríbeme por correo con tu comprobante.",
       });
     }
 
     const resultado = await generarYEnviarLectura(datos);
 
     // ya no necesitamos conservar los datos en memoria
-    delete sessionStore[session_id];
+    delete sessionStore[orderId];
 
-    res.json(resultado);
-  } catch (err) {
-    console.error("❌ Error en /api/finalizar-lectura:", err);
-    res.status(500).json({
-      error: "No se pudo finalizar la lectura tras el pago.",
+    return res.json({
+      status: "COMPLETED",
+      resultado,
     });
+  } catch (err) {
+    console.error("❌ Error en /api/paypal/capture-order:", err);
+    res.status(500).json({ error: "Error interno al capturar orden" });
   }
 });
 
